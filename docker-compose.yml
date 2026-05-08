@@ -1,0 +1,29 @@
+version: '3.9'
+
+# MongoDB is hosted on Atlas (free cloud tier) — no local DB container needed.
+# This file is only needed if you want to run API + frontend in Docker.
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: meeting_api
+    restart: unless-stopped
+    ports:
+      - '4000:4000'
+    env_file:
+      - ./backend/.env
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: meeting_web
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    env_file:
+      - ./frontend/.env
+    depends_on:
+      - backend
