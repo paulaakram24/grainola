@@ -83,6 +83,64 @@ export class AuthService {
     await RefreshToken.deleteOne({ token });
   }
 
+  /**
+   * Find or create a user from an OAuth provider (Google / GitHub / Apple).
+   * Three lookup paths, in order:
+   *   1. By the provider-specific id (e.g. user has logged in this way before)
+   *   2. By email (link an existing email/password account to the provider)
+   *   3. Otherwise, create a fresh account
+   */
+  async findOrCreateOAuthUser(input: {
+    provider: 'google' | 'github' | 'apple';
+    providerId: string;
+    email: string;
+    name: string;
+    avatarUrl?: string;
+  }) {
+    const { provider, providerId, email, name, avatarUrl } = input;
+    const idField =
+      provider === 'google' ? 'googleId'
+      : provider === 'github' ? 'githubId'
+      : 'appleId';
+
+    let user = await User.findOne({ [idField]: providerId });
+
+    if (!user && email) {
+      user = await User.findOne({ email: email.toLowerCase() });
+      if (user) {
+        (user as any)[idField] = providerId;
+        if (avatarUrl && !user.avatarUrl) user.avatarUrl = avatarUrl;
+        await user.save();
+      }
+    }
+
+    if (!user) {
+      user = await User.create({
+        name,
+        email: email.toLowerCase(),
+        avatarUrl,
+        [idField]: providerId,
+        // No passwordHash → user can only log in via this provider until they reset.
+      });
+      await Folder.create({
+        name: 'All Meetings',
+        userId: user._id,
+        isDefault: true,
+        color: '#6366f1',
+        position: 0,
+      });
+    }
+
+    const accessToken  = this.generateAccessToken(user._id.toString(), user.email);
+    const refreshToken = await this.createRefreshToken(user._id.toString());
+
+    return {
+      user: { id: user._id, name: user.name, email: user.email, avatarUrl: user.avatarUrl },
+      accessToken,
+      refreshToken,
+    };
+  }
+
   async getProfile(userId: string) {
     const user = await User.findById(userId).select('id name email avatarUrl createdAt');
     if (!user) throw new AppError('User not found', 404);

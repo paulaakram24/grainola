@@ -4,6 +4,7 @@ import { authenticate, AuthRequest } from '../middleware/auth.middleware';
 import { calendarService } from '../services/calendar.service';
 import { sendSuccess, sendError } from '../utils/apiResponse';
 import { env } from '../config/env';
+import { handleGoogleLoginCallback, isLoginState } from '../controllers/oauth.controller';
 
 const router = Router();
 
@@ -23,11 +24,17 @@ router.get('/oauth/connect', (req: AuthRequest, res: Response) => {
 });
 
 router.get('/oauth/callback', async (req: AuthRequest, res: Response) => {
-  const { code, state: userId } = req.query as { code: string; state: string };
-  if (!code || !userId) return sendError(res, 'Missing code or state', 400);
+  const { code, state } = req.query as { code: string; state: string };
+  if (!code || !state) return sendError(res, 'Missing code or state', 400);
+
+  // Login flow uses the same Google redirect URI but tags state with "login:..."
+  if (isLoginState(state)) {
+    return handleGoogleLoginCallback(req, res);
+  }
 
   try {
-    await calendarService.handleCallback(code, userId);
+    // Otherwise the state is a userId from the calendar-link flow
+    await calendarService.handleCallback(code, state);
     res.redirect(`${env.FRONTEND_URL}/dashboard?calendar=connected`);
   } catch (err) {
     res.redirect(`${env.FRONTEND_URL}/dashboard?calendar=error`);

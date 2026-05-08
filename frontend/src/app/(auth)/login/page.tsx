@@ -1,15 +1,24 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useLogin } from '@/hooks/useAuth';
+import { SocialLoginButtons } from '@/components/auth/SocialLoginButtons';
 
 export default function LoginPage() {
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [error, setError]       = useState('');
+  const params = useSearchParams();
+
+  // Surface errors that come back from the OAuth callback (?error=...)
+  useEffect(() => {
+    const oauthError = params.get('error');
+    if (oauthError) setError(oauthError);
+  }, [params]);
 
   const { mutate: login, isPending } = useLogin();
 
@@ -20,9 +29,7 @@ export default function LoginPage() {
       { email, password },
       {
         onError: (err: any) => {
-          setError(
-            err?.response?.data?.message ?? 'Invalid email or password.'
-          );
+          setError(err?.response?.data?.message ?? 'Invalid email or password.');
         },
       }
     );
@@ -68,6 +75,8 @@ export default function LoginPage() {
       <Button type="submit" className="w-full" disabled={isPending}>
         {isPending ? 'Signing in…' : 'Sign in'}
       </Button>
+
+      <SocialLoginButtons />
 
       <p className="text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{' '}

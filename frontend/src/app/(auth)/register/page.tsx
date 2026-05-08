@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useRegister } from '@/hooks/useAuth';
+import { SocialLoginButtons } from '@/components/auth/SocialLoginButtons';
 
 export default function RegisterPage() {
   const [name, setName]         = useState('');
@@ -82,6 +83,8 @@ export default function RegisterPage() {
       <Button type="submit" className="w-full" disabled={isPending}>
         {isPending ? 'Creating account…' : 'Create account'}
       </Button>
+
+      <SocialLoginButtons />
 
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{' '}

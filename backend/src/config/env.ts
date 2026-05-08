@@ -29,6 +29,13 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string(),
   GOOGLE_REDIRECT_URI:  z.string().url(),
 
+  // Optional — used only if the user clicks "Continue with GitHub"
+  GITHUB_CLIENT_ID:     z.string().optional().default(''),
+  GITHUB_CLIENT_SECRET: z.string().optional().default(''),
+
+  // Used to build OAuth callback URLs that match what's registered with each provider
+  BACKEND_URL:          z.string().url().optional().default('http://localhost:4000'),
+
   RATE_LIMIT_WINDOW_MS: z.string().default('900000'),
   RATE_LIMIT_MAX:       z.string().default('100'),
 });
