@@ -21,14 +21,6 @@ function GitHubIcon() {
   );
 }
 
-function AppleIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
-      <path d="M16.37 1c.04 1.21-.42 2.4-1.18 3.27-.78.92-2.07 1.64-3.32 1.54a3.8 3.8 0 0 1 1.1-3.13C13.78 1.74 15.18 1.07 16.37 1ZM20.5 17.32c-.55 1.27-1.21 2.49-2.06 3.6-.96 1.27-2.32 2.85-4 2.86-1.49.02-1.88-.97-3.92-.96-2.04.01-2.46 1-3.96.96-1.68-.05-2.96-1.47-3.92-2.74-2.69-3.55-2.97-7.7-1.31-9.92.97-1.32 2.5-2.13 4.02-2.16 1.69-.04 3.28 1.12 3.92 1.12.65 0 2.71-1.39 4.56-1.18.78.04 2.95.32 4.36 2.42-3.65 2.16-3.06 7.46.31 8.9-.5.96-.84 1.47-2 3.1Z" />
-    </svg>
-  );
-}
-
 export function SocialLoginButtons() {
   const googleHref = `${API_URL}/auth/oauth/google`;
   const githubHref = `${API_URL}/auth/oauth/github`;
@@ -44,14 +36,14 @@ export function SocialLoginButtons() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <a
           href={googleHref}
           className="flex items-center justify-center gap-2 h-10 rounded-md border border-input bg-background hover:bg-accent transition-colors text-sm font-medium"
           aria-label="Continue with Google"
         >
           <GoogleIcon />
-          <span className="hidden sm:inline">Google</span>
+          <span>Google</span>
         </a>
 
         <a
@@ -60,19 +52,8 @@ export function SocialLoginButtons() {
           aria-label="Continue with GitHub"
         >
           <GitHubIcon />
-          <span className="hidden sm:inline">GitHub</span>
+          <span>GitHub</span>
         </a>
-
-        <button
-          type="button"
-          disabled
-          title="Sign in with Apple requires an Apple Developer account ($99/year). Coming soon."
-          className="flex items-center justify-center gap-2 h-10 rounded-md border border-input bg-black/90 text-white opacity-60 cursor-not-allowed text-sm font-medium"
-          aria-label="Continue with Apple — not yet configured"
-        >
-          <AppleIcon />
-          <span className="hidden sm:inline">Apple</span>
-        </button>
       </div>
     </div>
   );

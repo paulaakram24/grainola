@@ -91,17 +91,14 @@ export class AuthService {
    *   3. Otherwise, create a fresh account
    */
   async findOrCreateOAuthUser(input: {
-    provider: 'google' | 'github' | 'apple';
+    provider: 'google' | 'github';
     providerId: string;
     email: string;
     name: string;
     avatarUrl?: string;
   }) {
     const { provider, providerId, email, name, avatarUrl } = input;
-    const idField =
-      provider === 'google' ? 'googleId'
-      : provider === 'github' ? 'githubId'
-      : 'appleId';
+    const idField = provider === 'google' ? 'googleId' : 'githubId';
 
     let user = await User.findOne({ [idField]: providerId });
 
