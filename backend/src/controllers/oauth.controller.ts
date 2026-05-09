@@ -155,7 +155,7 @@ export const githubOAuthCallback = async (req: Request, res: Response) => {
       const emailsResp = await fetch('https://api.github.com/user/emails', {
         headers: { Authorization: `Bearer ${accessToken}`, 'User-Agent': 'Grainola' },
       });
-      const emails: any[] = await emailsResp.json();
+      const emails = (await emailsResp.json()) as any[];
       const primary = emails.find((e) => e.primary && e.verified) ?? emails.find((e) => e.verified);
       email = primary?.email ?? null;
     }

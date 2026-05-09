@@ -65,9 +65,10 @@ export function useUpdateFolder() {
 export function useDeleteFolder() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: IS_DEMO
-      ? (id: string) => Promise.resolve(id)
-      : (id: string) => api.delete(`/folders/${id}`),
+    mutationFn: async (id: string) => {
+      if (!IS_DEMO) await api.delete(`/folders/${id}`);
+      return id;
+    },
     onSuccess: (id) => {
       if (IS_DEMO) {
         qc.setQueryData<Folder[]>(FOLDERS_KEY, (old = []) => old.filter((f) => f.id !== id));
@@ -81,9 +82,10 @@ export function useDeleteFolder() {
 export function useReorderFolders() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: IS_DEMO
-      ? (orderedIds: string[]) => Promise.resolve(orderedIds)
-      : (orderedIds: string[]) => api.put('/folders/reorder', { orderedIds }),
+    mutationFn: async (orderedIds: string[]) => {
+      if (!IS_DEMO) await api.put('/folders/reorder', { orderedIds });
+      return orderedIds;
+    },
     onMutate: async (orderedIds) => {
       await qc.cancelQueries({ queryKey: FOLDERS_KEY });
       const prev = qc.getQueryData<Folder[]>(FOLDERS_KEY);

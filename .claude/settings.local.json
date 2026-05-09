@@ -72,7 +72,9 @@
       "Bash(curl -s -I http://localhost:4000/api/v1/auth/oauth/github)",
       "Bash(curl -s -o /dev/null -w \"/login:    %{http_code}\\\\n\" http://localhost:3000/login)",
       "Bash(curl -s -o /dev/null -w \"/register: %{http_code}\\\\n\" http://localhost:3000/register)",
-      "Bash(curl -s -o /dev/null -w \"/auth/oauth/callback: %{http_code}\\\\n\" http://localhost:3000/auth/oauth/callback)"
+      "Bash(curl -s -o /dev/null -w \"/auth/oauth/callback: %{http_code}\\\\n\" http://localhost:3000/auth/oauth/callback)",
+      "Bash(vercel whoami *)",
+      "Bash(vercel telemetry *)"
     ]
   }
 }

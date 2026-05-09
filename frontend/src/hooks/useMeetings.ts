@@ -128,9 +128,10 @@ export function useUpdateMeeting() {
 export function useDeleteMeeting() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: IS_DEMO
-      ? (id: string) => Promise.resolve(id)
-      : (id: string) => api.delete(`/meetings/${id}`),
+    mutationFn: async (id: string) => {
+      if (!IS_DEMO) await api.delete(`/meetings/${id}`);
+      return id;
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['meetings'] }),
   });
 }

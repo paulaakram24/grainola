@@ -48,9 +48,10 @@ export function useLogout() {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: IS_DEMO
-      ? () => Promise.resolve()
-      : () => api.post('/auth/logout', { refreshToken }),
+    mutationFn: async () => {
+      if (IS_DEMO) return;
+      await api.post('/auth/logout', { refreshToken });
+    },
     onSettled: () => {
       logout();
       router.replace('/login');

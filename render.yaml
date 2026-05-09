@@ -1,0 +1,61 @@
+# Render Blueprint — deploys the Express backend with persistent disk for uploads.
+# After signing in to render.com:
+#   1. Click "New" → "Blueprint"
+#   2. Connect this GitHub repo (paulaakram24/grainola)
+#   3. Render reads this file and provisions everything
+#   4. Set the secret env vars (MONGODB_URI, JWT_*, GROQ_API_KEY, GOOGLE_*) in the dashboard
+#
+# Free tier note: services spin down after 15 min of inactivity and take ~30 s
+# to wake up on the first request after sleeping. Persistent disk survives sleeps.
+
+services:
+  - type: web
+    name: grainola-api
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: node dist/server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: UPLOADS_DIR
+        value: /opt/render/project/uploads
+      - key: FRONTEND_URL
+        sync: false   # set in dashboard — your Vercel URL
+      - key: BACKEND_URL
+        sync: false   # set in dashboard — this service's render.com URL
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false   # https://your-render-url.onrender.com/api/v1/calendar/oauth/callback
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: RATE_LIMIT_MAX
+        value: 100
+    disk:
+      name: uploads
+      mountPath: /opt/render/project/uploads
+      sizeGB: 1
