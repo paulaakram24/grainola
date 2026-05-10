@@ -45,8 +45,16 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Stricter limit for auth endpoints
-const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
+// Stricter limit for auth endpoints — prevents brute force but lenient enough
+// not to lock out a legitimate user/demo retry. Returns a clear message so the
+// frontend can surface "too many attempts" instead of a generic failure.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders:   false,
+  message: { success: false, message: 'Too many attempts — please wait a few minutes and try again.' },
+});
 app.use('/api/v1/auth/login',    authLimiter);
 app.use('/api/v1/auth/register', authLimiter);
 

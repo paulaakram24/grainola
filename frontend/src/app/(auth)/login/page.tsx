@@ -1,7 +1,6 @@
 'use client';
-import { Suspense, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,13 +13,14 @@ function LoginForm() {
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [error, setError]       = useState('');
-  const params = useSearchParams();
 
   // Surface errors that come back from the OAuth callback (?error=...)
   useEffect(() => {
-    const oauthError = params.get('error');
+    if (typeof window === 'undefined') return;
+    const sp = new URLSearchParams(window.location.search);
+    const oauthError = sp.get('error');
     if (oauthError) setError(oauthError);
-  }, [params]);
+  }, []);
 
   const { mutate: login, isPending } = useLogin();
 
@@ -31,7 +31,14 @@ function LoginForm() {
       { email, password },
       {
         onError: (err: any) => {
-          setError(err?.response?.data?.message ?? 'Invalid email or password.');
+          const serverMsg = err?.response?.data?.message;
+          if (serverMsg) {
+            setError(serverMsg);
+          } else if (err?.code === 'ERR_NETWORK' || !err?.response) {
+            setError('Cannot reach the server. Is the backend running on port 4000?');
+          } else {
+            setError('Invalid email or password.');
+          }
         },
       }
     );
@@ -91,9 +98,5 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
-  return (
-    <Suspense fallback={null}>
-      <LoginForm />
-    </Suspense>
-  );
+  return <LoginForm />;
 }

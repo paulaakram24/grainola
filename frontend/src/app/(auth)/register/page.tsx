@@ -22,9 +22,19 @@ export default function RegisterPage() {
       { name, email, password },
       {
         onError: (err: any) => {
-          setError(
-            err?.response?.data?.message ?? 'Registration failed. Please try again.'
-          );
+          const serverMsg = err?.response?.data?.message;
+          const fieldErrors = err?.response?.data?.errors as
+            | Record<string, string[]> | undefined;
+          if (fieldErrors) {
+            const first = Object.values(fieldErrors).flat()[0];
+            setError(first ? `${first}` : serverMsg ?? 'Registration failed.');
+          } else if (serverMsg) {
+            setError(serverMsg);
+          } else if (err?.code === 'ERR_NETWORK' || !err?.response) {
+            setError('Cannot reach the server. Is the backend running on port 4000?');
+          } else {
+            setError('Registration failed. Please try again.');
+          }
         },
       }
     );
