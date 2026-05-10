@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import * as FileType from 'file-type';
 import { Meeting } from '../models/Meeting';
 import { AppError } from '../middleware/error.middleware';
 import { logger } from '../utils/logger';
@@ -13,6 +14,15 @@ const ALLOWED_MIME_TYPES = [
   'audio/webm;codecs=opus',
   'video/mp4', 'video/webm', 'video/quicktime',
 ];
+
+// MIME types we accept after magic-byte sniffing. webm is the same container
+// for both audio and video — we accept either for an audio-recording flow.
+const ALLOWED_DETECTED_MIMES = new Set([
+  'audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/ogg', 'audio/webm',
+  'audio/mp4', 'audio/x-m4a',
+  'video/webm', 'video/mp4', 'video/quicktime',
+  'application/ogg',
+]);
 
 export class UploadService {
   async directUpload(
@@ -46,6 +56,18 @@ export class UploadService {
     const localPath = path.join(uploadsDir, diskName);
 
     const buffer = Buffer.from(audioBase64, 'base64');
+
+    // Magic-byte sniffing — never trust the client-supplied mimeType. Without
+    // this, a user with a stolen access token could upload an HTML/exe payload
+    // labelled "audio/webm" and have us serve it from /uploads/...
+    const detected = await FileType.fromBuffer(buffer);
+    if (!detected || !ALLOWED_DETECTED_MIMES.has(detected.mime)) {
+      throw new AppError(
+        `File contents are not a recognised audio/video format${detected ? ` (got ${detected.mime})` : ''}`,
+        400,
+      );
+    }
+
     fs.writeFileSync(localPath, buffer);
 
     const fileUrl = `/uploads/${diskName}`;

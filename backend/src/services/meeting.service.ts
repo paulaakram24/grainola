@@ -27,9 +27,12 @@ export class MeetingService {
     if (folderId) filter.folderId = folderId;
     if (status)   filter.status   = status;
     if (search) {
+      // Escape regex metacharacters so a query like "(.*)*$" can't cause
+      // catastrophic backtracking (ReDoS) on the title/description indexes.
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       filter.$or = [
-        { title:       { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
+        { title:       { $regex: escaped, $options: 'i' } },
+        { description: { $regex: escaped, $options: 'i' } },
       ];
     }
 

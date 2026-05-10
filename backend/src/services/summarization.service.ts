@@ -72,11 +72,13 @@ export class SummarizationService {
 
   async searchTranscripts(userId: string, query: string, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
+    // Escape user input — protects against ReDoS through the search field.
+    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
     const results = await Meeting.aggregate([
       { $match: { userId, 'transcript.segments': { $exists: true } } },
       { $unwind: '$transcript.segments' },
-      { $match: { 'transcript.segments.text': { $regex: query, $options: 'i' } } },
+      { $match: { 'transcript.segments.text': { $regex: escaped, $options: 'i' } } },
       {
         $project: {
           title:       1,
@@ -92,7 +94,7 @@ export class SummarizationService {
     const totalAgg = await Meeting.aggregate([
       { $match: { userId, 'transcript.segments': { $exists: true } } },
       { $unwind: '$transcript.segments' },
-      { $match: { 'transcript.segments.text': { $regex: query, $options: 'i' } } },
+      { $match: { 'transcript.segments.text': { $regex: escaped, $options: 'i' } } },
       { $count: 'total' },
     ]);
 

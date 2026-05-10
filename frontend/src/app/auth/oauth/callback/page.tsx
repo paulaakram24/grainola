@@ -44,6 +44,12 @@ export default function OAuthCallbackPage() {
       };
       localStorage.setItem('auth-storage', JSON.stringify(persisted));
 
+      // Strip the tokens from the URL immediately so they don't end up
+      // in browser history or the Referer header on the next navigation.
+      try {
+        window.history.replaceState(null, '', window.location.pathname);
+      } catch { /* ignore — best-effort */ }
+
       // Hard navigation forces the dashboard route to re-read auth from
       // localStorage on a fresh app instance — eliminates the in-memory
       // vs persisted state race that router.replace can hit.
