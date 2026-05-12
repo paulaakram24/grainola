@@ -21,8 +21,27 @@ const app = express();
 
 // ── Security & Compression ────────────────────────────────────────────────────
 app.use(helmet());
+
+// CORS — accept the locally-running dev frontend AND the deployed Vercel URL.
+// FRONTEND_URL can be a comma-separated list, e.g.
+//   FRONTEND_URL=http://localhost:3000,https://grainola.vercel.app
+const allowedOrigins = (env.FRONTEND_URL ?? 'http://localhost:3000')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 app.use(cors({
-  origin: env.FRONTEND_URL,
+  origin(origin, cb) {
+    // Allow same-origin / curl / mobile apps (no Origin header)
+    if (!origin) return cb(null, true);
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    // Allow any *.vercel.app preview if the main FE is on Vercel — handy when
+    // Vercel auto-generates preview URLs per PR.
+    if (allowedOrigins.some((o) => o.includes('.vercel.app')) && origin.endsWith('.vercel.app')) {
+      return cb(null, true);
+    }
+    cb(new Error(`CORS: origin ${origin} not allowed`));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 }));
