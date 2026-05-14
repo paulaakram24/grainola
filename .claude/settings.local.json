@@ -84,7 +84,18 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/auth/oauth/callback)",
       "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000__TRACKED_VAR__)",
       "Bash(curl -s -o /dev/null -w \"  backend → %{http_code}\\\\n\" http://localhost:4000/health)",
-      "Bash(grep -rn '$regex' '/e/AAST/test app/backend/src/services/')"
+      "Bash(grep -rn '$regex' '/e/AAST/test app/backend/src/services/')",
+      "Bash(curl -s -w \"\\\\nstatus=%{http_code}\\\\ntime=%{time_total}s\\\\n\" https://grainola-api.onrender.com/health)",
+      "Bash(curl -s https://grainola-api.onrender.com/api/v1/subscription/plans)",
+      "Bash(curl -s -I -H 'Origin: https://grainola1.vercel.app' https://grainola-api.onrender.com/api/v1/subscription/plans)",
+      "Bash(curl -s -I https://grainola-api.onrender.com/api/v1/auth/oauth/google)",
+      "Bash(curl -s -I https://grainola-api.onrender.com/api/v1/auth/oauth/github)",
+      "Bash(curl -s https://grainola-api.onrender.com/health)",
+      "Bash(curl -s https://grainola1.vercel.app/login)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}, %{size_download} bytes\\\\n\" https://grainola1.vercel.app/login)",
+      "Bash(curl -s -L -I --max-redirs 1 https://grainola-api.onrender.com/api/v1/auth/oauth/google)",
+      "Bash(grep -oE '\"NEXT_PUBLIC_API_URL[^\"]*\"|api_url[^,\"]{0,80}')",
+      "Bash(grep -oE 'href=\"[^\"]{0,200}\"')"
     ]
   }
 }

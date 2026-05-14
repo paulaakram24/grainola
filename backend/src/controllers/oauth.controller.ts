@@ -52,13 +52,28 @@ const LOGIN_STATE_PREFIX = 'login:';
 
 /** Helper — redirect the browser to /auth/oauth/callback on the frontend
  *  with the issued tokens, or to /login with an error message. */
+/**
+ * FRONTEND_URL can be a comma-separated list (so CORS allows both localhost
+ * and the deployed Vercel URL). When we 302 back to the frontend after OAuth
+ * we need a SINGLE URL — prefer the first non-localhost entry (i.e. the
+ * production URL), falling back to the first entry overall.
+ */
+function pickFrontendOrigin(): string {
+  const raw = env.FRONTEND_URL ?? 'http://localhost:3000';
+  const all = raw.split(',').map((s) => s.trim()).filter(Boolean);
+  if (all.length === 0) return 'http://localhost:3000';
+  const remote = all.find((u) => !u.includes('localhost') && !u.includes('127.0.0.1'));
+  // Strip trailing slash so `${origin}/path` doesn't double up.
+  return (remote ?? all[0]).replace(/\/$/, '');
+}
+
 function frontendCallback(
   res: Response,
   result:
     | { ok: true; accessToken: string; refreshToken: string; user: any }
     | { ok: false; error: string },
 ) {
-  const FE = env.FRONTEND_URL ?? 'http://localhost:3000';
+  const FE = pickFrontendOrigin();
   if (result.ok) {
     const params = new URLSearchParams({
       accessToken:  result.accessToken,
@@ -140,7 +155,7 @@ export function isLoginState(state: unknown): boolean {
 
 export const githubOAuthStart = (_req: Request, res: Response) => {
   if (!env.GITHUB_CLIENT_ID) {
-    const FE = env.FRONTEND_URL ?? 'http://localhost:3000';
+    const FE = pickFrontendOrigin();
     return res.redirect(`${FE}/login?error=${encodeURIComponent('GitHub login is not configured on the server')}`);
   }
   // CSRF protection — same scheme as Google.
