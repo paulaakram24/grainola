@@ -9,7 +9,9 @@ interface UIState {
 }
 
 export const useUIStore = create<UIState>((set) => ({
-  sidebarOpen: true,
+  // Drawer state for mobile. Hidden by default; the sidebar is always
+  // visible on md+ regardless of this flag via CSS.
+  sidebarOpen: false,
   activeFolderId: null,
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   setActiveFolderId: (id) => set({ activeFolderId: id }),

@@ -69,13 +69,14 @@ export default function RootPage() {
             </div>
             <span className="text-xl font-bold text-gray-900">Grainola</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link href="/login">
               <Button variant="ghost" size="sm">Log in</Button>
             </Link>
             <Link href="/register">
               <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700">
-                Get started free
+                <span className="hidden sm:inline">Get started free</span>
+                <span className="sm:hidden">Sign up</span>
               </Button>
             </Link>
           </div>
@@ -83,27 +84,27 @@ export default function RootPage() {
       </nav>
 
       {/* ── Hero ────────────────────────────────────────────────────────────── */}
-      <section className="flex-1 flex flex-col items-center justify-center text-center px-4 py-24 sm:py-32">
+      <section className="flex-1 flex flex-col items-center justify-center text-center px-4 py-16 sm:py-24 md:py-32">
         <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-xs font-semibold mb-6 tracking-wide uppercase">
           AI-powered meeting intelligence
         </span>
-        <h1 className="text-5xl sm:text-6xl font-extrabold text-gray-900 leading-tight max-w-3xl">
+        <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 leading-tight max-w-3xl">
           Record, transcribe &amp;{' '}
           <span className="text-indigo-600">summarize</span> every meeting
         </h1>
-        <p className="mt-6 text-xl text-gray-500 max-w-xl leading-relaxed">
+        <p className="mt-4 sm:mt-6 text-base sm:text-xl text-gray-500 max-w-xl leading-relaxed">
           Grainola turns your meetings into searchable transcripts, smart
           summaries, and action items — automatically, so you can stay present
           and never miss a thing.
         </p>
-        <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/register">
-            <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-base px-8 py-6">
+        <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center w-full max-w-md sm:max-w-none">
+          <Link href="/register" className="w-full sm:w-auto">
+            <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-base px-6 sm:px-8 py-5 sm:py-6 w-full sm:w-auto">
               Start for free — no credit card
             </Button>
           </Link>
-          <Link href="/login">
-            <Button size="lg" variant="outline" className="text-base px-8 py-6">
+          <Link href="/login" className="w-full sm:w-auto">
+            <Button size="lg" variant="outline" className="text-base px-6 sm:px-8 py-5 sm:py-6 w-full sm:w-auto">
               Sign in
             </Button>
           </Link>

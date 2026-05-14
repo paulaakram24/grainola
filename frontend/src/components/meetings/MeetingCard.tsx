@@ -32,10 +32,10 @@ export function MeetingCard({ meeting }: { meeting: Meeting }) {
               <MeetingCardMenu meetingId={meeting.id} currentTitle={meeting.title} />
             </div>
 
-            <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Folder className="h-3 w-3" />
-                {meeting.folder?.name ?? 'All Meetings'}
+            <div className="flex items-center gap-x-3 gap-y-1 flex-wrap mt-1.5 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1 min-w-0">
+                <Folder className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">{meeting.folder?.name ?? 'All Meetings'}</span>
               </span>
               {meeting.durationSeconds && (
                 <span className="flex items-center gap-1">
@@ -49,7 +49,7 @@ export function MeetingCard({ meeting }: { meeting: Meeting }) {
                   {meeting._count.highlights}
                 </span>
               )}
-              <span className="ml-auto">{relativeDate(meeting.meetingDate)}</span>
+              <span className="ml-auto whitespace-nowrap">{relativeDate(meeting.meetingDate)}</span>
             </div>
 
             {meeting.summary?.shortText && (
@@ -61,7 +61,7 @@ export function MeetingCard({ meeting }: { meeting: Meeting }) {
 
           <div className={cn('flex items-center gap-1 text-xs flex-shrink-0', status.color)}>
             <StatusIcon className={cn('h-3.5 w-3.5', meeting.status === 'PROCESSING' && 'animate-spin')} />
-            <span>{status.label}</span>
+            <span className="hidden sm:inline">{status.label}</span>
           </div>
         </div>
       </div>

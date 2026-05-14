@@ -1,13 +1,14 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Plus, Calendar, Search, LayoutDashboard, Zap, LogOut, Settings,
+  Plus, Calendar, Search, LayoutDashboard, Zap, LogOut, Settings, X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFolders } from '@/hooks/useFolders';
 import { useAuthStore } from '@/store/auth.store';
+import { useUIStore } from '@/store/ui.store';
 import { useLogout } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { CreateFolderDialog } from '@/components/folders/CreateFolderDialog';
@@ -20,6 +21,16 @@ export function Sidebar() {
   const { data: folders = [] } = useFolders();
   const [showCreateFolder, setShowCreateFolder] = useState(false);
 
+  // Mobile drawer state. On md+ the sidebar is always visible via CSS,
+  // on mobile it slides in over the content when sidebarOpen is true.
+  const sidebarOpen = useUIStore((s) => s.sidebarOpen);
+  const setSidebarOpen = useUIStore((s) => s.setSidebarOpen);
+
+  // Auto-close the mobile drawer whenever the user navigates to a new page.
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname, setSidebarOpen]);
+
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/search',    label: 'Search',    icon: Search },
@@ -28,15 +39,43 @@ export function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 flex-shrink-0 border-r border-border bg-white flex flex-col h-screen sticky top-0">
+    <>
+      {/* Backdrop — only visible when the mobile drawer is open. Tapping it closes the drawer. */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside
+        className={cn(
+          // Desktop: in-flow flex item, always visible. Mobile: fixed off-canvas drawer.
+          'w-64 flex-shrink-0 border-r border-border bg-white flex flex-col h-screen z-40',
+          'fixed top-0 left-0 transition-transform duration-200 ease-out',
+          'md:sticky md:translate-x-0',
+          sidebarOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full md:translate-x-0',
+        )}
+      >
       {/* Logo */}
-      <div className="p-4 border-b border-border">
+      <div className="p-4 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
             <span className="text-white text-xs font-bold">M</span>
           </div>
           <span className="font-bold text-gray-900">Grainola</span>
         </div>
+        {/* Close button — mobile only */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-label="Close menu"
+        >
+          <X className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Navigation */}
@@ -120,6 +159,7 @@ export function Sidebar() {
       {showCreateFolder && (
         <CreateFolderDialog onClose={() => setShowCreateFolder(false)} />
       )}
-    </aside>
+      </aside>
+    </>
   );
 }
