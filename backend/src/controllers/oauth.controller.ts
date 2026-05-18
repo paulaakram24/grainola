@@ -58,7 +58,7 @@ const LOGIN_STATE_PREFIX = 'login:';
  * we need a SINGLE URL — prefer the first non-localhost entry (i.e. the
  * production URL), falling back to the first entry overall.
  */
-function pickFrontendOrigin(): string {
+export function pickFrontendOrigin(): string {
   const raw = env.FRONTEND_URL ?? 'http://localhost:3000';
   const all = raw.split(',').map((s) => s.trim()).filter(Boolean);
   if (all.length === 0) return 'http://localhost:3000';

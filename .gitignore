@@ -38,10 +38,12 @@ next-env.d.ts
 logs
 *.log
 
-# IDE
+# IDE / agent
 .idea/
 .vscode/
 *.swp
+.claude/settings.local.json
+.claude/worktrees/
 
 # uploads (user-generated)
 backend/uploads/

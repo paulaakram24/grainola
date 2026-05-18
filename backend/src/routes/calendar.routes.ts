@@ -4,7 +4,7 @@ import { authenticate, AuthRequest } from '../middleware/auth.middleware';
 import { calendarService } from '../services/calendar.service';
 import { sendSuccess, sendError } from '../utils/apiResponse';
 import { env } from '../config/env';
-import { handleGoogleLoginCallback, isLoginState } from '../controllers/oauth.controller';
+import { handleGoogleLoginCallback, isLoginState, pickFrontendOrigin } from '../controllers/oauth.controller';
 
 const router = Router();
 
@@ -35,9 +35,9 @@ router.get('/oauth/callback', async (req: AuthRequest, res: Response) => {
   try {
     // Otherwise the state is a userId from the calendar-link flow
     await calendarService.handleCallback(code, state);
-    res.redirect(`${env.FRONTEND_URL}/dashboard?calendar=connected`);
+    res.redirect(`${pickFrontendOrigin()}/dashboard?calendar=connected`);
   } catch (err) {
-    res.redirect(`${env.FRONTEND_URL}/dashboard?calendar=error`);
+    res.redirect(`${pickFrontendOrigin()}/dashboard?calendar=error`);
   }
 });
 
