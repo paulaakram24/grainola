@@ -42,8 +42,7 @@ logs
 .idea/
 .vscode/
 *.swp
-.claude/settings.local.json
-.claude/worktrees/
+.claude/
 
 # uploads (user-generated)
 backend/uploads/
