@@ -1,0 +1,424 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Grainola API",
+    "version": "1.0.0",
+    "description": "AI-powered meeting intelligence platform. Record/upload meetings, auto-transcribe (Groq Whisper), summarize (Llama 3), organize into folders, search transcripts, import from Google Calendar, and manage subscriptions. All data is scoped to the authenticated user."
+  },
+  "servers": [
+    { "url": "https://grainola-api.onrender.com/api/v1", "description": "Production (Render)" },
+    { "url": "http://localhost:4000/api/v1", "description": "Local dev" }
+  ],
+  "tags": [
+    { "name": "Auth" },
+    { "name": "Meetings" },
+    { "name": "Recordings" },
+    { "name": "Folders" },
+    { "name": "Subscription" },
+    { "name": "Calendar" },
+    { "name": "Search" },
+    { "name": "Health" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Obtain a token via POST /auth/login or /auth/register, then send `Authorization: Bearer <accessToken>`."
+      }
+    },
+    "schemas": {
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["name", "email", "password"],
+        "properties": {
+          "name": { "type": "string", "minLength": 2, "example": "Test User" },
+          "email": { "type": "string", "format": "email", "example": "testsprite@example.com" },
+          "password": { "type": "string", "minLength": 8, "example": "Test1234!" }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email", "example": "testsprite@example.com" },
+          "password": { "type": "string", "example": "Test1234!" }
+        }
+      },
+      "RefreshRequest": {
+        "type": "object",
+        "required": ["refreshToken"],
+        "properties": {
+          "refreshToken": { "type": "string", "example": "8d7863b9-153f-466b-9d26-3fdf671cb489" }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": {
+            "type": "object",
+            "properties": {
+              "user": { "$ref": "#/components/schemas/User" },
+              "accessToken": { "type": "string" },
+              "refreshToken": { "type": "string" }
+            }
+          },
+          "message": { "type": "string" }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "69fd266cb1d64a9917237584" },
+          "name": { "type": "string", "example": "Test User" },
+          "email": { "type": "string", "example": "testsprite@example.com" }
+        }
+      },
+      "CreateMeetingRequest": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 200, "example": "Weekly Standup" },
+          "description": { "type": "string", "maxLength": 1000 },
+          "folderId": { "type": "string", "description": "Optional. Defaults to the user's 'All Meetings' folder." },
+          "meetingDate": { "type": "string", "format": "date-time", "example": "2026-05-19T10:00:00.000Z" }
+        }
+      },
+      "UpdateMeetingRequest": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 200, "example": "Renamed Meeting" },
+          "description": { "type": "string", "maxLength": 1000 },
+          "folderId": { "type": "string" },
+          "meetingDate": { "type": "string", "format": "date-time" }
+        }
+      },
+      "MoveMeetingRequest": {
+        "type": "object",
+        "required": ["folderId"],
+        "properties": {
+          "folderId": { "type": "string", "example": "69fd266cb1d64a9917237586" }
+        }
+      },
+      "UploadRecordingRequest": {
+        "type": "object",
+        "required": ["meetingId", "audioBase64", "mimeType"],
+        "properties": {
+          "meetingId": { "type": "string", "example": "69fd266cb1d64a9917237590" },
+          "audioBase64": { "type": "string", "description": "Base64-encoded audio bytes of a real audio/video file (validated by magic bytes)." },
+          "mimeType": { "type": "string", "example": "audio/webm" },
+          "fileName": { "type": "string", "example": "recording.webm" },
+          "fileSize": { "type": "integer", "example": 102400 }
+        }
+      },
+      "CreateFolderRequest": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "example": "Client Calls" },
+          "color": { "type": "string", "example": "#10b981" }
+        }
+      },
+      "UpdateFolderRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "example": "Renamed Folder" },
+          "color": { "type": "string", "example": "#f59e0b" }
+        }
+      },
+      "ReorderFoldersRequest": {
+        "type": "object",
+        "required": ["orderedIds"],
+        "properties": {
+          "orderedIds": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ChangePlanRequest": {
+        "type": "object",
+        "required": ["plan"],
+        "properties": {
+          "plan": { "type": "string", "enum": ["free", "basic", "premium"], "example": "basic" }
+        }
+      },
+      "ImportEventsRequest": {
+        "type": "object",
+        "required": ["eventIds"],
+        "properties": {
+          "eventIds": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "SuccessEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": {},
+          "message": { "type": "string" }
+        }
+      },
+      "ErrorEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "message": { "type": "string", "example": "Invalid email or password" }
+        }
+      }
+    }
+  },
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Health check",
+        "security": [],
+        "responses": {
+          "200": { "description": "Service is up", "content": { "application/json": { "schema": { "type": "object", "properties": { "status": { "type": "string", "example": "ok" } } } } } }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register a new user",
+        "security": [],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RegisterRequest" } } } },
+        "responses": {
+          "201": { "description": "Account created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
+          "400": { "description": "Validation error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } } },
+          "409": { "description": "Email already exists", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } } }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Log in",
+        "security": [],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginRequest" } } } },
+        "responses": {
+          "200": { "description": "Logged in", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
+          "401": { "description": "Invalid credentials", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } } }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Refresh access token (rotates refresh token)",
+        "security": [],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RefreshRequest" } } } },
+        "responses": {
+          "200": { "description": "New tokens", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
+          "401": { "description": "Invalid/expired refresh token" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Log out (invalidate refresh token)",
+        "responses": { "200": { "description": "Logged out", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } } }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Get the current user",
+        "responses": {
+          "200": { "description": "Current user", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } },
+          "401": { "description": "No/invalid token" }
+        }
+      }
+    },
+    "/meetings": {
+      "get": {
+        "tags": ["Meetings"],
+        "summary": "List meetings",
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 } },
+          { "name": "folderId", "in": "query", "schema": { "type": "string" } },
+          { "name": "search", "in": "query", "schema": { "type": "string" } },
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["PENDING", "PROCESSING", "COMPLETED", "FAILED"] } }
+        ],
+        "responses": {
+          "200": { "description": "Meeting list", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } },
+          "401": { "description": "Unauthorized" }
+        }
+      },
+      "post": {
+        "tags": ["Meetings"],
+        "summary": "Create a meeting",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateMeetingRequest" } } } },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } },
+          "400": { "description": "Validation error" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/meetings/{id}": {
+      "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+      "get": {
+        "tags": ["Meetings"],
+        "summary": "Get a meeting with recordings, transcript, summary, highlights",
+        "responses": {
+          "200": { "description": "Meeting", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } },
+          "404": { "description": "Not found" },
+          "401": { "description": "Unauthorized" }
+        }
+      },
+      "put": {
+        "tags": ["Meetings"],
+        "summary": "Update a meeting",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateMeetingRequest" } } } },
+        "responses": {
+          "200": { "description": "Updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } },
+          "404": { "description": "Not found" }
+        }
+      },
+      "delete": {
+        "tags": ["Meetings"],
+        "summary": "Delete a meeting and all nested data",
+        "responses": {
+          "200": { "description": "Deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } },
+          "404": { "description": "Not found" }
+        }
+      }
+    },
+    "/meetings/{id}/move": {
+      "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+      "patch": {
+        "tags": ["Meetings"],
+        "summary": "Move a meeting to another folder",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MoveMeetingRequest" } } } },
+        "responses": {
+          "200": { "description": "Moved", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } },
+          "404": { "description": "Meeting or target folder not found" }
+        }
+      }
+    },
+    "/recordings/upload": {
+      "post": {
+        "tags": ["Recordings"],
+        "summary": "Upload a recording to a meeting (enforces per-plan limit; triggers transcription)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UploadRecordingRequest" } } } },
+        "responses": {
+          "201": { "description": "Upload saved, transcription queued", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } },
+          "400": { "description": "Missing fields or file content not a valid audio/video format" },
+          "403": { "description": "Plan recording limit reached" },
+          "404": { "description": "Meeting not found" }
+        }
+      }
+    },
+    "/recordings/{recordingId}": {
+      "parameters": [{ "name": "recordingId", "in": "path", "required": true, "schema": { "type": "string" } }],
+      "delete": {
+        "tags": ["Recordings"],
+        "summary": "Delete one recording from its meeting",
+        "responses": {
+          "200": { "description": "Deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } },
+          "404": { "description": "Recording not found" }
+        }
+      }
+    },
+    "/folders": {
+      "get": {
+        "tags": ["Folders"],
+        "summary": "List folders with meeting counts",
+        "responses": { "200": { "description": "Folder list", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } }, "401": { "description": "Unauthorized" } }
+      },
+      "post": {
+        "tags": ["Folders"],
+        "summary": "Create a folder",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateFolderRequest" } } } },
+        "responses": { "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } }, "400": { "description": "Validation error" } }
+      }
+    },
+    "/folders/reorder": {
+      "put": {
+        "tags": ["Folders"],
+        "summary": "Reorder folders",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReorderFoldersRequest" } } } },
+        "responses": { "200": { "description": "Reordered", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } } }
+      }
+    },
+    "/folders/{id}": {
+      "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+      "put": {
+        "tags": ["Folders"],
+        "summary": "Update a folder (default folder cannot be renamed)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateFolderRequest" } } } },
+        "responses": { "200": { "description": "Updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } }, "400": { "description": "Cannot rename the default folder" }, "404": { "description": "Not found" } }
+      },
+      "delete": {
+        "tags": ["Folders"],
+        "summary": "Delete a folder (default folder cannot be deleted; meetings reassigned to default)",
+        "responses": { "200": { "description": "Deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } }, "400": { "description": "Cannot delete the default folder" }, "404": { "description": "Not found" } }
+      }
+    },
+    "/subscription/plans": {
+      "get": {
+        "tags": ["Subscription"],
+        "summary": "List available plans",
+        "security": [],
+        "responses": { "200": { "description": "Plans", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } } }
+      }
+    },
+    "/subscription/my-plan": {
+      "get": {
+        "tags": ["Subscription"],
+        "summary": "Get current subscription",
+        "responses": { "200": { "description": "Subscription", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } }, "401": { "description": "Unauthorized" } }
+      }
+    },
+    "/subscription/subscribe": {
+      "post": {
+        "tags": ["Subscription"],
+        "summary": "Subscribe to a plan",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChangePlanRequest" } } } },
+        "responses": { "200": { "description": "Subscribed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } }, "400": { "description": "Validation error" } }
+      }
+    },
+    "/subscription/change-plan": {
+      "post": {
+        "tags": ["Subscription"],
+        "summary": "Change the current plan",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChangePlanRequest" } } } },
+        "responses": { "200": { "description": "Plan changed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } }, "400": { "description": "Already on this plan / validation error" } }
+      }
+    },
+    "/calendar/events": {
+      "get": {
+        "tags": ["Calendar"],
+        "summary": "List upcoming Google Calendar events (requires calendar connected)",
+        "responses": { "200": { "description": "Events", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } }, "401": { "description": "Calendar not connected / unauthorized" } }
+      }
+    },
+    "/calendar/import": {
+      "post": {
+        "tags": ["Calendar"],
+        "summary": "Import selected calendar events as meetings",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ImportEventsRequest" } } } },
+        "responses": { "200": { "description": "Imported", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } }, "400": { "description": "eventIds required" }, "500": { "description": "Import failed" } }
+      }
+    },
+    "/calendar/disconnect": {
+      "delete": {
+        "tags": ["Calendar"],
+        "summary": "Disconnect Google Calendar",
+        "responses": { "200": { "description": "Disconnected", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } } }
+      }
+    },
+    "/search": {
+      "get": {
+        "tags": ["Search"],
+        "summary": "Full-text search across titles and transcripts",
+        "parameters": [{ "name": "q", "in": "query", "required": true, "schema": { "type": "string", "minLength": 2 } }],
+        "responses": { "200": { "description": "Search results", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } }, "401": { "description": "Unauthorized" } }
+      }
+    }
+  }
+}
